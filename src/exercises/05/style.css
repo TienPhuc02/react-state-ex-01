@@ -1,0 +1,78 @@
+.task-manager {
+  background: #2d2d2d;
+  padding: 24px;
+  border-radius: 8px;
+  width: 400px;
+  margin: 20px auto;
+  color: white;
+}
+
+form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+input {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid #4a5568;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: white;
+  font-size: 16px;
+}
+
+button {
+  padding: 8px 16px;
+  background: #4a5568;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100px;
+}
+
+button:hover:not(:disabled) {
+  background: #2d3748;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.undo {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  margin: 4px 0;
+  background: #404040;
+  border-radius: 4px;
+}
+
+li span {
+  cursor: pointer;
+}
+
+li button {
+  padding: 4px 8px;
+  background: #991b1b;
+  font-size: 14px;
+}
+
+li button:hover {
+  background: #7f1d1d;
+}

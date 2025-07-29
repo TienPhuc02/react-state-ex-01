@@ -1,0 +1,40 @@
+.cart {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #2d2d2d;
+  border-radius: 8px;
+  color: white;
+}
+
+button {
+  background: #4a5568;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2d3748;
+}
+
+.cart-items {
+  list-style: none;
+  padding: 0;
+}
+
+.cart-items li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #4a5568;
+}
+
+.summary {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #4a5568;
+}

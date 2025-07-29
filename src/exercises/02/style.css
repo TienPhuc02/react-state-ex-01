@@ -1,0 +1,86 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: #1a1a1a;
+  color: white;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #f7fafc;
+}
+
+.contact-form {
+  background: #2d3748;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #a0aec0;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #4a5568;
+  border-radius: 0.5rem;
+  background: #1a202c;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+input::placeholder {
+  color: #4a5568;
+}
+
+.error {
+  color: #f56565;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background: #3182ce;
+  transform: translateY(-2px);
+}
+
+.form-group.error input {
+  border-color: #f56565;
+}
