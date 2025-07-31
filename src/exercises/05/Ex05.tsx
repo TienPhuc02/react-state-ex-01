@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import "./style.css";
 
 type Task = {
@@ -7,17 +7,84 @@ type Task = {
   completed: boolean;
 };
 
+type Action =
+  | { type: "add"; task: Task }
+  | { type: "toggle"; id: number }
+  | { type: "delete"; id: number; task: Task }
+  | { type: "undo" };
+
 type State = {
   tasks: Task[];
-  history: Task[][];
+  history: Action[];
 };
 
-function TaskManager() {
-  const [state, setState] = useState<State>({
-    tasks: [],
-    history: [],
-  });
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "add": {
+      const newTasks = [...state.tasks, action.task];
+      return {
+        tasks: newTasks,
+        history: [...state.history, { type: "add", task: action.task }],
+      };
+    }
 
+    case "toggle": {
+      const newTasks = state.tasks.map((task) =>
+        task.id === action.id
+          ? { ...task, completed: !task.completed }
+          : task
+      );
+      return {
+        tasks: newTasks,
+        history: [...state.history, { type: "toggle", id: action.id }],
+      };
+    }
+
+    case "delete": {
+      const newTasks = state.tasks.filter((task) => task.id !== action.id);
+      return {
+        tasks: newTasks,
+        history: [...state.history, { type: "delete", id: action.id, task: action.task }],
+      };
+    }
+
+    case "undo": {
+      if (state.history.length === 0) return state;
+
+      const lastAction = state.history[state.history.length - 1];
+      let revertedTasks = [...state.tasks];
+
+      switch (lastAction.type) {
+        case "add":
+          revertedTasks = state.tasks.filter((t) => t.id !== lastAction.task.id);
+          break;
+
+        case "toggle":
+          revertedTasks = state.tasks.map((task) =>
+            task.id === lastAction.id
+              ? { ...task, completed: !task.completed }
+              : task
+          );
+          break;
+
+        case "delete":
+          revertedTasks = [...state.tasks, lastAction.task];
+          break;
+      }
+
+      return {
+        tasks: revertedTasks,
+        history: state.history.slice(0, -1),
+      };
+    }
+
+    default:
+      return state;
+  }
+}
+
+function TaskManager() {
+  const [state, dispatch] = useReducer(reducer, { tasks: [], history: [] });
   const [input, setInput] = useState("");
 
   function handleAddTask(e: React.FormEvent) {
@@ -30,42 +97,20 @@ function TaskManager() {
       completed: false,
     };
 
-    setState((prev) => ({
-      tasks: [...prev.tasks, newTask],
-      history: [...prev.history, prev.tasks],
-    }));
-
+    dispatch({ type: "add", task: newTask });
     setInput("");
   }
 
   function handleToggleTask(id: number) {
-    setState((prev) => ({
-      tasks: prev.tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      ),
-      history: [...prev.history, prev.tasks],
-    }));
+    dispatch({ type: "toggle", id });
   }
 
-  function handleDeleteTask(id: number) {
-    setState((prev) => ({
-      tasks: prev.tasks.filter((task) => task.id !== id),
-      history: [...prev.history, prev.tasks],
-    }));
+  function handleDeleteTask(task: Task) {
+    dispatch({ type: "delete", id: task.id, task });
   }
 
   function handleUndo() {
-    setState((prev) => {
-      if (prev.history.length === 0) return prev;
-
-      const lastTasks = prev.history[prev.history.length - 1];
-      const newHistory = prev.history.slice(0, -1);
-
-      return {
-        tasks: lastTasks,
-        history: newHistory,
-      };
-    });
+    dispatch({ type: "undo" });
   }
 
   return (
@@ -99,7 +144,7 @@ function TaskManager() {
             >
               {task.text}
             </span>
-            <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
+            <button onClick={() => handleDeleteTask(task)}>Delete</button>
           </li>
         ))}
       </ul>

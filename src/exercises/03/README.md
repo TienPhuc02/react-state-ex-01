@@ -82,80 +82,184 @@ function FormWizard() {
 Before implementing, you must design your form wizard's state flow using **ALL THREE** approaches:
 
 #### 1. Raw Text Diagram
-Create a detailed text-based description of all states, transitions, and business logic:
-
-```
 FORM WIZARD STATE FLOW
 
 Initial State:
 - step: 1 (Personal Info)
 - status: 'editing'
-- data: empty objects for personal, address, preferences
-- errors: empty object
+- data:
+    - personal: { name: '', email: '' }
+    - address: { street: '', city: '' }
+    - preferences: { notifications: false }
+- errors: {}
 
-State Transitions:
+=== Step 1: Personal Info ===
+Fields: name, email
+Transition:
+- "Next" clicked:
+    - Validate:
+        - name: required
+        - email: required & valid format
+    - If valid:
+        - step → 2
+        - errors cleared
+    - If invalid:
+        - stay on step 1
+        - set errors.personal
+- "Previous" button is hidden (no action)
 
-1. STEP 1 → STEP 2 (Personal Info → Address)
-   Trigger: User clicks "Next" button
-   Conditions: 
-   - Name is not empty (minimum 2 characters)
-   - Email contains "@" symbol and valid format
-   - No validation errors present
-   Action: Increment step to 2, clear previous errors
-   
-   STEP 1 → STEP 1 (Stay on Personal Info)
-   Trigger: User clicks "Next" with invalid data
-   Conditions: Name empty OR email invalid
-   Action: Set errors object with specific field messages, keep step at 1
+=== Step 2: Address ===
+Fields: street, city
+Transition:
+- "Next" clicked:
+    - Validate:
+        - street: required
+        - city: required
+    - If valid:
+        - step → 3
+        - errors cleared
+    - If invalid:
+        - stay on step 2
+        - set errors.address
+- "Previous" clicked:
+    - Always allowed
+    - step → 1
 
-2. STEP 2 → STEP 3 (Address → Preferences)
-   Trigger: User clicks "Next" button
-   Conditions:
-   - Street address is not empty
-   - City is not empty
-   Action: Increment step to 3, clear previous errors
+=== Step 3: Preferences ===
+Fields: notifications (checkbox)
+Transition:
+- "Submit" clicked:
+    - No validation needed
+    - status → 'submitting'
+    - Simulate submission (1s delay)
+        - status → 'submitted'
+- "Previous" clicked:
+    - Always allowed
+    - step → 2
 
-   STEP 2 → STEP 1 (Back to Personal Info)
-   Trigger: User clicks "Back" button
-   Conditions: None (always allowed)
-   Action: Decrement step to 1, preserve all form data
+=== Final State: ===
+- status: 'submitted'
+- Could reset to step=1 if needed (form reset flow)
 
-3. STEP 3 → SUBMITTED (Preferences → Final)
-   Trigger: User clicks "Submit" button
-   Conditions: All previous steps are valid
-   Action: Change status to 'submitting', then 'submitted'
+=== Other rules ===
+- Form data is always preserved across steps.
+- Field error clears onChange.
+- Progress bar updates per step.
+- "Submit" button disabled if status = 'submitting'
 
-Error Handling:
-- Each step validates only its own fields
-- Errors are stored in errors object by field name
-- Previous step data is always preserved
-- User can navigate back without losing data
-
-Final States:
-- 'editing': User is actively filling the form
-- 'submitting': Form is being processed (show loading)
-- 'submitted': Form completed successfully
-- 'error': Submission failed (allow retry)
-```
 
 #### 2. Mermaid Diagram
 Create a professional state diagram using Mermaid syntax:
 ```mermaid
 stateDiagram-v2
     [*] --> Step1
-    Step1 --> Step2 : Valid
-    Step1 --> Step1 : Invalid
-    Step2 --> Step3 : Valid
-    Step2 --> Step2 : Invalid
-    Step2 --> Step1 : Back
-    Step3 --> Submitted : Valid
-    Step3 --> Step3 : Invalid
-    Step3 --> Step2 : Back
+
+    Step1 --> Step2 : Next (valid)
+    Step1 --> Step1 : Next (invalid)
+
+    Step2 --> Step3 : Next (valid)
+    Step2 --> Step2 : Next (invalid)
+    Step2 --> Step1 : Previous
+
+    Step3 --> Submitting : Submit
+    Step3 --> Step2 : Previous
+
+    Submitting --> Submitted : Done (after 1s)
+
     Submitted --> [*]
 ```
 
 #### 3. Stately (XState) Design
 Use [Stately.ai](https://stately.ai) to create a visual state machine for your form wizard, then screenshot/export your design and include it in your submission.
+import { createMachine } from 'xstate';
+
+const formWizardMachine = createMachine({
+  id: 'formWizard',
+  initial: 'editing',
+  context: {
+    data: {
+      personal: { name: '', email: '' },
+      address: { street: '', city: '' },
+      preferences: { notifications: false },
+    },
+    errors: {},
+  },
+  states: {
+    editing: {
+      initial: 'step1',
+      states: {
+        step1: {
+          on: {
+            NEXT: [
+              {
+                cond: 'validateStep1',
+                target: 'step2',
+                actions: 'clearErrors'
+              },
+              { actions: 'setStep1Errors' }
+            ],
+            FIELD_CHANGE: { actions: 'updateField' }
+          }
+        },
+        step2: {
+          on: {
+            NEXT: [
+              {
+                cond: 'validateStep2',
+                target: 'step3',
+                actions: 'clearErrors'
+              },
+              { actions: 'setStep2Errors' }
+            ],
+            PREVIOUS: 'step1',
+            FIELD_CHANGE: { actions: 'updateField' }
+          }
+        },
+        step3: {
+          on: {
+            SUBMIT: '#formWizard.submitting',
+            PREVIOUS: 'step2',
+            FIELD_CHANGE: { actions: 'updateField' }
+          }
+        }
+      }
+    },
+    submitting: {
+      invoke: {
+        src: 'submitForm',
+        onDone: { target: 'submitted' }
+      }
+    },
+    submitted: {
+      type: 'final'
+    }
+  }
+}, {
+  actions: {
+    clearErrors: (context, event) => { console.log('Clear errors') },
+    setStep1Errors: (context, event) => { console.log('Set Step 1 Errors') },
+    setStep2Errors: (context, event) => { console.log('Set Step 2 Errors') },
+    updateField: (context, event) => {
+      const { section, field, value } = event;
+      context.data[section][field] = value;
+    }
+  },
+  services: {
+    submitForm: () => new Promise((resolve) => setTimeout(resolve, 1000))
+  },
+  guards: {
+    validateStep1: (context) => {
+      const { name, email } = context.data.personal;
+      const isNameValid = name.trim() !== '';
+      const isEmailValid = /\S+@\S+\.\S+/.test(email);
+      return isNameValid && isEmailValid;
+    },
+    validateStep2: (context) => {
+      const { street, city } = context.data.address;
+      return street.trim() !== '' && city.trim() !== '';
+    }
+  }
+});
 
 ### 💡 Key Principle
 > Group related state together to maintain consistency and simplify updates across your form's lifecycle.

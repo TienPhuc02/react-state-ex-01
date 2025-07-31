@@ -125,10 +125,74 @@ Complex Logic:
 
 #### 2. Mermaid Diagram
 Create a professional state diagram using Mermaid syntax:
+stateDiagram-v2
+    [*] --> Idle
+
+    Idle --> AddingTask : Add Task (non-empty)
+    AddingTask --> Idle : Task Added
+
+    Idle --> TogglingTask : Toggle Task Completion
+    TogglingTask --> Idle : Task Toggled
+
+    Idle --> DeletingTask : Delete Task
+    DeletingTask --> Idle : Task Deleted
+
+    Idle --> Undoing : Undo (if history not empty)
+    Undoing --> Idle : Undo Done
 
 
 #### 3. Stately (XState) Design
 Use [Stately.ai](https://stately.ai) to create a visual state machine for your task manager reducer, including all actions (add, toggle, delete, undo) and state transitions, then screenshot/export your design and include it in your submission.
+const taskManagerMachine = createMachine({
+  id: 'taskManager',
+  initial: 'ready',
+  context: {
+    tasks: [],
+    history: [],
+    input: ""
+  },
+  states: {
+    ready: {
+      on: {
+        ADD_TASK: { cond: 'inputNotEmpty', target: 'addingTask' },
+        TOGGLE_TASK: { target: 'togglingTask' },
+        DELETE_TASK: { target: 'deletingTask' },
+        UNDO: { cond: 'hasHistory', target: 'undoing' },
+        UPDATE_INPUT: { actions: 'updateInputValue' }
+      }
+    },
+    addingTask: {
+      entry: ['saveHistory', 'addNewTask', 'clearInput'],
+      always: 'ready'
+    },
+    togglingTask: {
+      entry: ['saveHistory', 'toggleTaskCompletion'],
+      always: 'ready'
+    },
+    deletingTask: {
+      entry: ['saveHistory', 'deleteTask'],
+      always: 'ready'
+    },
+    undoing: {
+      entry: ['undoLastAction'],
+      always: 'ready'
+    }
+  }
+}, {
+  actions: {
+    saveHistory: (context) => { /* push current tasks into history */ },
+    addNewTask: (context) => { /* add new task with input */ },
+    clearInput: (context) => { /* clear input field */ },
+    toggleTaskCompletion: (context, event) => { /* toggle task by id */ },
+    deleteTask: (context, event) => { /* delete task by id */ },
+    undoLastAction: (context) => { /* pop history and set tasks */ },
+    updateInputValue: (context, event) => { context.input = event.value; }
+  },
+  guards: {
+    inputNotEmpty: (context) => context.input.trim() !== "",
+    hasHistory: (context) => context.history.length > 0
+  }
+});
 
 ### 💡 Key Principle
 > Reducers centralize complex state logic and ensure all updates follow consistent patterns.
